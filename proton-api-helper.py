@@ -1,9 +1,26 @@
 import os
 import getpass
 import json
+import readline
+import atexit
 from proton.api import Session
 
 cwd = os.getcwd()
+history_path = os.path.join(os.path.expanduser("~"), ".protonmail_api_history")
+
+if os.path.exists(history_path):
+    readline.read_history_file(history_path)
+
+readline.set_history_length(100)
+
+def remove_last_history_line():
+    readline.remove_history_item(readline.get_current_history_length()-1)
+
+def input_no_history(text):
+    line = input(text)
+    remove_last_history_line()
+    return line
+
 
 def printHelp():
     print("List commands:")
@@ -46,7 +63,7 @@ def auth(
     proton_session.enable_alternative_routing=alt_route
 
     if not username:
-        username=input("username: ")
+        username=input_no_history("username: ")
 
     if not password:
         password = getpass.getpass("password: ")
@@ -55,7 +72,7 @@ def auth(
         scope = proton_session.authenticate(username, password)
 
         if 'twofactor' in scope:
-            code=input("2fa code: ")
+            code=input_no_history("2fa code: ")
             scope = proton_session.provide_2fa(code)
 
     except Exception as error:
@@ -120,8 +137,8 @@ while not exit:
 
         if len(command) > 1:
             for data in [[param.strip() for param in command[i].split("=")] for i in range(1, len(command))]:
-                if len(data)>=2:
-	                params[data[0]]='='.join([data[i] for i in range(1, len(data))])
+                if len(data) >= 2:
+                    params[data[0]]='='.join([data[i] for i in range(1, len(data))])
 
         if cmd=="exit":
             exit=True
@@ -161,3 +178,5 @@ while not exit:
             printHelp()
     except Exception as error:
         print('ERROR', error)
+
+atexit.register(readline.write_history_file, history_path)
