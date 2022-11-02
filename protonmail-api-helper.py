@@ -5,8 +5,14 @@ import readline
 import atexit
 from proton.api import Session
 
-cwd = os.getcwd()
-history_path = os.path.join(os.path.expanduser("~"), ".protonmail_api_history")
+cwd=os.getcwd()
+work_dir = os.path.join(cwd, ".protonmail")
+if not os.path.exists(work_dir):
+    os.mkdir(work_dir)
+
+dump_ext=".dump.json"
+
+history_path = os.path.join(work_dir, ".history")
 
 if os.path.exists(history_path):
     readline.read_history_file(history_path)
@@ -59,8 +65,8 @@ def auth(
         api_url=api_url,
         appversion=appversion,
         user_agent=user_agent,
-        log_dir_path=os.path.join(cwd, "logs"),
-        cache_dir_path=os.path.join(cwd, "cache"),
+        log_dir_path=os.path.join(work_dir, "logs"),
+        cache_dir_path=os.path.join(work_dir, "cache"),
         tls_pinning=tls_pinning,
         ClientSecret=client_secret
     )
@@ -91,20 +97,23 @@ def load(
         alt_route=True,
     ):
     global proton_session
-    with open(file_name, "r") as f:
-        dump_data = json.loads(f.read())
+
+    path=os.path.join(work_dir, f"{file_name}{dump_ext}")
+    with open(path, "r") as file:
+        dump_data = json.loads(file.read())
         proton_session = Session.load(
             dump=dump_data,
-            log_dir_path=os.path.join(cwd, "logs"),
-            cache_dir_path=os.path.join(cwd, "cache"),
+            log_dir_path=os.path.join(work_dir, "logs"),
+            cache_dir_path=os.path.join(work_dir, "cache"),
             tls_pinning=tls_pinning
         )
         proton_session.enable_alternative_routing=alt_route
 
 def dump(file_name):
     dump_json = proton_session.dump()
-    with open(file_name, 'w') as f:
-        f.write(json.dumps(dump_json))
+    path=os.path.join(work_dir, f"{file_name}{dump_ext}")
+    with open(path, 'w') as file:
+        file.write(json.dumps(dump_json))
 
 def refresh():
     proton_session.refresh()
@@ -171,12 +180,12 @@ while not exit:
             )
         elif cmd=="load":
             load(
-                file_name=params.get("file","./protonmail.dump.json"),
+                file_name=params.get("file",""),
                 tls_pinning=params.get("tls",False),
                 alt_route=params.get("alt-route",True)
             )
         elif cmd=="dump":
-            dump(file_name=params.get("file","./protonmail.dump.json"))
+            dump(file_name=params.get("file",""))
         elif cmd=="refresh":
             refresh()
         elif cmd=="request" and params["query"]:
