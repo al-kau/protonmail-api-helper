@@ -22,20 +22,25 @@ def input_no_history(text):
     return line
 
 
-def printHelp():
+def print_help():
     print("List commands:")
     print("1) auth [(optional)--user=<id> --psw=<password> --api-url=<address> --alt-route=<[True|False]> --tls=<[True|False]>")
     print("        --app-version=<app_version> --user-agent=<user_agent> --client-secret=<client_secret>]")
     print("2) dump [(optional)--file=<filename>]")
     print("3) load [(optional)--file=<filename> --alt-route=<[True|False]> --tls=<[True|False]>]")
     print("4) refresh")
-    print("5) alt-routing --value=<[True|False]>")
-    print("6) request --query=<query> [(optional)--method<[get|post|put|delete|patch]>]")
+    print("5) request --query=<query> [(optional)--method<[get|post|put|delete|patch]>]")
     print("        e.g. request --query=/mail/v4/messages/count")
     print("        e.g. request --query=/mail/v4/messages?LabelID=0 --method=get")
-    print("        e.g. request --query=/mail/v4/messages/count/vFV...PQ==")
-    print("7) scope")
-    print("8) logout")
+    print("        e.g. request --query=/tests/ping")
+    print("6) logout")
+    print("7) get --attr=<attribute> [(optional)--param=<json>]")
+    print("        e.g. get --attr=Scope")
+    print("        e.g. get --attr=refresh --param={}")
+    print("        e.g. get --attr=api_request --param={\"endpoint\":\"/tests/ping\"}")
+    print("8) set --attr=<attribute> [(optional)--value=<value>]")
+    print("        e.g. set --attr=enable_alternative_routing --value=")
+    print("        e.g. set --attr=enable_alternative_routing --value=1")
     print("9) exit")
     print("")
 
@@ -104,9 +109,6 @@ def dump(file_name):
 def refresh():
     proton_session.refresh()
 
-def enable_alternative_routing(str_value):
-    proton_session.enable_alternative_routing=str_value.lower()=="true"
-
 def request(query, method=None):
     response=proton_session.api_request(
         endpoint=query,
@@ -114,13 +116,27 @@ def request(query, method=None):
     )
     print(response)
 
-def scope():
-    print(proton_session.Scope)
-
 def logout():
     proton_session.logout()
 
-printHelp()
+def get_attribute(name,param):
+    try:
+        attr = getattr(proton_session,name)
+        res =  attr
+        if param:
+            prm = json.loads(param)
+            res = attr(**prm)
+        print(res)
+    except Exception as error:
+        print(f'get_attribute({name},{param}): {error}')
+
+def set_attribute(name,value):
+    try:
+        setattr(proton_session,name,value)
+    except Exception as error:
+        print(f'set_attribute({name},{value}): {error}')
+
+print_help()
 
 exit=False
 
@@ -163,19 +179,25 @@ while not exit:
             dump(file_name=params.get("file","./protonmail.dump.json"))
         elif cmd=="refresh":
             refresh()
-        elif cmd=="alt-routing" and params["value"]:
-            enable_alternative_routing(params["value"])
         elif cmd=="request" and params["query"]:
             request(
                 query=params["query"], 
                 method=params.get("method",None)
             )
-        elif cmd=="scope":
-            scope()
         elif cmd=="logout":
             logout()
+        elif cmd=="get" and params["attr"]:
+            get_attribute(
+                name=params["attr"],
+                param=params.get("param",None)
+            )
+        elif cmd=="set" and params["attr"]:
+            set_attribute(
+                name=params["attr"],
+                value=params.get("value",None)
+            )
         else:
-            printHelp()
+            print_help()
     except Exception as error:
         print('ERROR', error)
 
