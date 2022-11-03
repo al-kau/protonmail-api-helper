@@ -53,7 +53,7 @@ def print_help():
 def auth(
         username="",
         password="",
-        api_url="https://mail-api.proton.me",
+        api_url="https://api.protonmail.ch",
         appversion="Other", 
         user_agent="None",
         client_secret=None,
