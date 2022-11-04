@@ -171,7 +171,7 @@ while not exit:
             auth (
                 username=params.get("user",""),
                 password=params.get("psw",""),
-                api_url=params.get("api-url","https://mail-api.proton.me"),
+                api_url=params.get("api-url","https://api.protonmail.ch"),
                 appversion=params.get("app-version","Other"), 
                 user_agent=params.get("user-agent","None"),
                 client_secret=params.get("client-secret",None),
