@@ -1,0 +1,20 @@
+{
+  "rest-client.logLevel": "info",
+  "rest-client.defaultHeaders": {
+    "Content-Type": "application/json; charset=utf-8"
+  },
+  
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "userAgent": "None",
+      "appVersion": "Other",
+    },
+    "proton": {
+      "apiHost": "mail-api.proton.me"
+    },
+    "protonmail": {
+      "apiHost": "api.protonmail.ch"
+    }
+  },
+
+}

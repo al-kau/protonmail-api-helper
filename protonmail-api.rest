@@ -1,0 +1,144 @@
+# Switch environment using shortcut Ctrl+Alt+E(Cmd+Alt+E for macOS), 
+# or press F1 and then select/type Rest Client: Switch Environmen.
+
+# file .env
+# ACCESS_TOKEN=<Access-Token>
+# UID=<UID>
+# REFRESH_TOKEN=<Refresh-Token>
+
+@hostname = https://{{apiHost}}
+
+###
+
+# @name test
+POST {{hostname}}/tests/ping HTTP/1.1
+
+###
+
+# @name authInfo
+# @prompt userName
+POST {{hostname}}/auth/info HTTP/1.1
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+
+{
+    "Username":"{{userName}}"
+}
+
+###
+
+@userName = {{authInfo.request.body.$.Username}}
+
+# @name auth
+# @prompt clientEphemeral base64
+# @prompt clientProof base64
+POST {{hostname}}/auth HTTP/1.1
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+
+{
+    "Username":"{{userName}}",
+    "ClientEphemeral":"{{clientEphemeral}}",
+    "ClientProof":"{{clientProof}}",
+    "SRPSession":"{{authInfo.response.body.$.SRPSession}}"
+}
+
+@accessToken={{auth.response.body.$.AccessToken}}
+@refreshToken={{auth.response.body.$.RefreshToken}}
+@uid={{auth.response.body.$.UID}}
+@passwordMode={{auth.response.body.$.PasswordMode}}
+@scope={{auth.response.body.$.Scope}}
+
+###
+
+# @name a2f
+# @prompt code
+Post {{hostname}}/auth/2fa HTTP/1.1
+Authorization: Bearer {{$dotenv ACCESS_TOKEN}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{$dotenv UID}}
+
+{
+    "TwoFactorCode": "{{code}}"
+}
+
+###
+
+# @name refresh
+Post {{hostname}}/auth/refresh HTTP/1.1
+Authorization: Bearer {{$dotenv ACCESS_TOKEN}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{$dotenv UID}}
+
+{
+    "ResponseType": "token",
+    "GrantType": "refresh_token",
+    "RefreshToken": "{{$dotenv REFRESH_TOKEN}}",
+    "RedirectURI": "http://protonmail.ch"
+}
+
+@accessToken={{refresh.response.body.$.AccessToken}}
+@refreshToken={{refresh.response.body.$.RefreshToken}}
+@uid={{refresh.request.headers.x-pm-uid}}
+@scope={{auth.response.body.$.Scope}}
+
+###
+
+# @name logout
+DELETE {{hostname}}/auth HTTP/1.1
+Authorization: Bearer {{accessToken}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{uid}}
+
+###
+
+# @name users
+Get {{hostname}}/users HTTP/1.1
+Authorization: Bearer {{accessToken}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{uid}}
+
+###
+
+# @name salts
+Get {{hostname}}/keys/salts HTTP/1.1
+Authorization: Bearer {{accessToken}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{uid}}
+
+###
+
+@addressID = {{users.response.body.$.User.ID}}
+
+# @name countMessages
+Get {{hostname}}/mail/v4/messages/count?addressID={{addressID}} HTTP/1.1
+Authorization: Bearer {{accessToken}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{uid}}
+
+###
+
+# @prompt labelID
+# @name listMessages
+Get {{hostname}}/mail/v4/messages?LabelID={{labelID}} HTTP/1.1
+Authorization: Bearer {{accessToken}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{uid}}
+
+###
+
+@messageID = {{listMessages.response.body.$.Messages[0].ID}}
+
+# @name message
+Get {{hostname}}/mail/v4/messages/{{messageID}} HTTP/1.1
+Authorization: Bearer {{accessToken}}
+User-Agent: {{userAgent}}
+x-pm-appversion: {{appVersion}}
+x-pm-uid: {{uid}}

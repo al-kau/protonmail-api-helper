@@ -352,5 +352,11 @@ MigrationBackup/
 # Working directory for the project
 .protonmail/
 
+# Response directory
+.responses/
+
 # Project dump files
 *.dump.json
+
+# rest-client environment file
+.env
