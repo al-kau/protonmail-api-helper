@@ -11,7 +11,7 @@
 ###
 
 # @name test
-POST {{hostname}}/tests/ping HTTP/1.1
+GET {{hostname}}/tests/ping HTTP/1.1
 
 ###
 
@@ -28,18 +28,18 @@ x-pm-appversion: {{appVersion}}
 ###
 
 @userName = {{authInfo.request.body.$.Username}}
+@ClientEphemeral = {{$dotenv ClientEphemeral}}
+@ClientProof = {{$dotenv ClientProof}}
 
 # @name auth
-# @prompt clientEphemeral base64
-# @prompt clientProof base64
 POST {{hostname}}/auth HTTP/1.1
 User-Agent: {{userAgent}}
 x-pm-appversion: {{appVersion}}
 
 {
     "Username":"{{userName}}",
-    "ClientEphemeral":"{{clientEphemeral}}",
-    "ClientProof":"{{clientProof}}",
+    "ClientEphemeral":"{{ClientEphemeral}}",
+    "ClientProof":"{{ClientProof}}",
     "SRPSession":"{{authInfo.response.body.$.SRPSession}}"
 }
 
